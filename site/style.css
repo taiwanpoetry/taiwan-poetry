@@ -4,3 +4,4 @@
 .members-page{min-height:65vh}.members-page h1{font-size:44px;letter-spacing:5px;margin:0}.back-home{display:inline-block;font-size:12px;color:var(--muted);margin-bottom:42px}.author a{display:inline-block;font-size:12px;margin-top:8px;text-decoration:underline;text-underline-offset:5px}.header-menu nav a[aria-current=page]{background:#e8ecdf}
 .about-page{min-height:65vh}.about-page h1{font-size:clamp(28px,5vw,44px);letter-spacing:3px;margin:0}.about-page .about{padding:65px 0 25px}
 .work-description{white-space:pre-wrap;line-height:1.9;color:var(--muted);font-size:14px}#reader-content a{margin-right:24px}
+.author-page{min-height:65vh}.author-page h1{font-size:clamp(28px,5vw,44px);letter-spacing:3px;margin:0 0 20px;overflow-wrap:anywhere}.author-bio{white-space:pre-line;color:var(--muted);font-size:14px;line-height:2;margin-bottom:48px;max-width:720px}

@@ -1,10 +1,18 @@
 'use strict';
-let content, activeType = '全部', authorFilter = new URLSearchParams(location.search).get('author') || '';
+let content, activeType = '全部';
+const authorFilter = new URLSearchParams(location.search).get('author') || '';
 const $ = s => document.querySelector(s);
 function el(tag, text, cls) { const node = document.createElement(tag); if (text != null) node.textContent = text; if (cls) node.className = cls; return node; }
 function safeUrl(value) { try { const u = new URL(value); return u.protocol === 'https:' ? u.href : ''; } catch { return ''; } }
 function externalLink(url, label) { const a = el('a', label); a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer'; return a; }
 function workTypes(work) { return Array.isArray(work.types) ? work.types : String(work.type || '').split('、'); }
+function selectWorks(works, authors, { authorId = '', latest = false, type = '全部', term = '' } = {}) {
+  const names = new Map(authors.map(a => [a.id, a.name]));
+  let selected = works.map((work, index) => ({ work, index })).filter(({ work }) => names.has(work.authorId) && (!authorId || work.authorId === authorId));
+  selected.sort((a, b) => (Date.parse(b.work.submittedAt || b.work.date) || 0) - (Date.parse(a.work.submittedAt || a.work.date) || 0) || b.index - a.index);
+  if (latest) selected = selected.slice(0, 10);
+  return selected.map(item => item.work).filter(w => (type === '全部' || workTypes(w).includes(type)) && `${w.title} ${w.text || ''} ${w.description || ''} ${names.get(w.authorId)}`.toLocaleLowerCase().includes(term.toLocaleLowerCase()));
+}
 function showWork(work) {
   const box = $('#reader-content'); box.replaceChildren();
   const author = content.authors.find(a => a.id === work.authorId);
@@ -21,10 +29,13 @@ function showWork(work) {
 function renderWorks() {
   if (!$('#works-grid')) return;
   const term = $('#search').value.trim().toLocaleLowerCase();
-  const works = content.works.filter(w => {
-    const a = content.authors.find(a => a.id === w.authorId);
-    return a && (activeType === '全部' || workTypes(w).includes(activeType)) && (!authorFilter || w.authorId === authorFilter) && `${w.title} ${w.text} ${w.description || ''} ${a.name}`.toLocaleLowerCase().includes(term);
-  });
+  const isAuthorPage = document.body.dataset.page === 'author';
+  if (isAuthorPage && !content.authors.some(a => a.id === authorFilter)) {
+    $('#work-count').textContent = '';
+    $('#works-grid').replaceChildren(el('p', '找不到這位同仁，請返回同仁名錄選擇作者。', 'empty'));
+    return;
+  }
+  const works = selectWorks(content.works, content.authors, { authorId: isAuthorPage ? authorFilter : '', latest: !isAuthorPage, type: activeType, term });
   $('#work-count').textContent = `${works.length} 件作品`;
   const grid = $('#works-grid'); grid.replaceChildren();
   if (!works.length) grid.append(el('p', '暫無符合條件的作品。可清除搜尋或選擇「全部作品」。', 'empty'));
@@ -45,11 +56,17 @@ async function init() {
     $('#notice').textContent = content.demo ? '目前為網站示範：作者與作品皆為示例，正式同步後會替換為審核通過的資料。' : '';
     if ($('#authors-grid')) content.authors.forEach(a => {
       const card = el('article', null, 'author'), button = el('a', '閱讀作品 →');
-      button.href = `index.html?author=${encodeURIComponent(a.id)}#works`;
+      button.href = `author.html?author=${encodeURIComponent(a.id)}`;
       card.append(el('div', a.name.slice(0, 1), 'avatar'), el('h3', a.name), el('p', a.bio), button);
       $('#authors-grid').append(card);
     });
     if ($('#authors-grid') && !content.authors.length) $('#authors-grid').append(el('p', '同仁名錄將於創作者通過審核後開放。', 'empty'));
+    if (document.body.dataset.page === 'author') {
+      const author = content.authors.find(a => a.id === authorFilter);
+      $('#author-name').textContent = author ? `${author.name}的作品` : '找不到這位同仁';
+      $('#author-bio').textContent = author?.bio || '';
+      document.title = author ? `${author.name}的作品 · 臺灣詩學` : '作者作品 · 臺灣詩學';
+    }
     let missing = false;
     for (const key of ['author', 'work']) {
       const a = $(`#${key}-form`), url = safeUrl(content.forms?.[key]);
@@ -62,8 +79,8 @@ async function init() {
   } catch (err) { $('#notice').textContent = '暫時無法載入作品，請重新整理後再試。'; console.error(err); }
 }
 function updateFilters() { document.querySelectorAll('[data-type]').forEach(b => { const selected = b.dataset.type === activeType; b.classList.toggle('active', selected); b.setAttribute('aria-pressed', selected); }); }
-document.querySelectorAll('[data-type]').forEach(b => b.addEventListener('click', () => { activeType = b.dataset.type; authorFilter = ''; updateFilters(); if (content) renderWorks(); }));
-$('#search')?.addEventListener('input', () => { authorFilter = ''; if (content) renderWorks(); });
+document.querySelectorAll('[data-type]').forEach(b => b.addEventListener('click', () => { activeType = b.dataset.type; updateFilters(); if (content) renderWorks(); }));
+$('#search')?.addEventListener('input', () => { if (content) renderWorks(); });
 $('#reader .close')?.addEventListener('click', () => $('#reader').close());
 $('#reader')?.addEventListener('click', e => { if (e.target === $('#reader')) { const r = e.target.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) e.target.close(); } });
 const headerMenu = $('.header-menu');
