@@ -1,10 +1,16 @@
 {
   "demo": false,
-  "updatedAt": null,
   "forms": {
     "author": "https://docs.google.com/forms/d/e/1FAIpQLSfdUm0QzBM7VUkQOofmnccPROR0nB5yzuzGGJ3mZHIqVezNBg/viewform",
     "work": "https://docs.google.com/forms/d/e/1FAIpQLSd4QwkG2aT6BOZ-oNj2Y6oB8qzP9I6yO2_feS_rhTAFxFlNLA/viewform"
   },
-  "authors": [],
-  "works": []
+  "authors": [
+    {
+      "id": "A-c2c0b326-159c-4fc9-8a33-b61cf5643e4a",
+      "name": "郭至卿",
+      "bio": "文字是生命的膠捲，感光處仍留白"
+    }
+  ],
+  "works": [],
+  "updatedAt": "2026-10-29T12:50:35.352Z"
 }
